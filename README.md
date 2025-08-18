@@ -20,14 +20,25 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## 设计说明
 
-To learn more about Next.js, take a look at the following resources:
+**项目存储方面采用IndexDB API，表格设计如下:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+经过调研，使用单表对邮件数据进行存储
+  - 相关数据可通过一个事务获得，避免跨表查询复杂性
+  - IndexDB是异步的，单次操作存储完整文章（含图片）比多次关联查询更高效
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+图片存储使用blob
+  - 原生支持blob来存储二进制数据，无额外编码开销，体积更小，读写效率更高（如果使用base64有编码开销）
+  - 可通过 URL.createObjectURL(blob) 生成临时 URL，直接用于 ```<img src>```
+  - 大段 Base64 文本会增加 HTML 解析负担
+  - 流式支持：支持分片读取（如 blob.slice()），适合流式加载大文件,canvas.toBlob()
+
+## 注意事项
+
+本项目使用idb库简化indexdb使用，下面是相关的使用提醒：
+
+[Do not await other things between the start and end of your transaction](https://www.npmjs.com/package/idb?activeTab=readme#general-enhancements)
 
 ## Deploy on Vercel
 

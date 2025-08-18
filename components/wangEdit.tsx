@@ -2,57 +2,127 @@
 
 import '@wangeditor/editor/dist/css/style.css' // 引入 css
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { Editor, Toolbar } from '@wangeditor/editor-for-react'
 import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
-
+import { saveMail, singleMail } from "@/lib/idb";
 interface EditorProps {
-  content: string
+  content: {
+    text: string,
+    img: Blob[] | null,
+  }
 }
 
-function MyEditor({ content }: EditorProps) {
+type InsertFnType = (url: string, alt: string, href: string) => void;
+
+const MyEditor = forwardRef(({ content }: EditorProps, ref) => {
+  const editorRef = useRef<IDomEditor | null>(null);
   // editor 实例
-  const [editor, setEditor] = useState<IDomEditor | null>(null) // TS 语法
+  // const [editor, setEditor] = useState<IDomEditor | null>(null) // TS 语法
+
+  const renderHtml = (content: EditorProps["content"]) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content.text, "text/html")
+
+    const imgElements = doc.querySelectorAll("img");
+
+    if (content.img && content.img.length > 0) {
+      imgElements.forEach((img, index) => {
+        if (content.img && content.img[index]) {
+          const blobUrl = URL.createObjectURL(content.img[index]);
+          img.src = blobUrl;
+        }
+      })
+    }
+
+    return doc.body.innerHTML; // TODO: 在以后写入之后需要将编辑器状态改为禁止编辑
+  }
 
   // 编辑器内容
-  const [html, setHtml] = useState(content)
+  const [html, setHtml] = useState('');
 
   useEffect(() => {
-    setHtml(content);
-  }, [content])
-
-  // 模拟 ajax 请求，异步设置 html
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setHtml('<p>hello world</p>')
-  //   }, 1500)
-  // }, [])
+    setTimeout(() => {
+      setHtml(renderHtml(content))
+    }, 0);
+  }, [content]);
 
   // 工具栏配置
   const toolbarConfig: Partial<IToolbarConfig> = {} // TS 语法
-  // const toolbarConfig = { }                        // JS 语法
 
   // 编辑器配置
   const editorConfig: Partial<IEditorConfig> = {
     // TS 语法
     scroll: true,
     placeholder: '请输入内容...',
+    MENU_CONF: {
+      uploadImage: {
+        async customUpload(file: File, insertFn: InsertFnType) {
+          console.log('Upload File: ', file);
+          const url = URL.createObjectURL(file);
+          const alt = file.name;
+          const href = url;
+
+          insertFn(url, alt, href);
+          console.log(`Insert img with local url: ${url}`)
+        },
+        fieldName: 'file', // 上传时传递的文件表单名，默认 'wangeditor-uploaded-image'
+        maxFileSize: 1 * 1024 * 1024, // 1M
+        maxNumberOfFiles: 5,
+        allowedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'], // 允许的文件类型
+      },      
+    },
+    
   }
+
+  const handleSave = async (mail: singleMail) => {
+    if (!editorRef.current) return;
+
+    const editorHtml = editorRef.current.getHtml();
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = editorHtml;    
+
+    const plain = tempDiv.textContent || "";
+
+    const imgElements = Array.from(tempDiv.querySelectorAll("img"));
+    const blobArr: Blob[] = [];
+    for (const imgElement of imgElements) {
+      if (imgElement.src) {
+        const res = await fetch(imgElement.src);
+        const blob = await res.blob();
+        blobArr.push(blob);
+      }
+    }
+    
+    mail.plain = plain;
+    mail.text = editorHtml;
+    mail.img = blobArr;
+
+    await saveMail(mail);
+  }
+
+  useImperativeHandle(ref, () => ({
+    save: handleSave,
+  }))
 
   // 及时销毁 editor ，重要！
   useEffect(() => {
     return () => {
-      if (editor == null) return
-      editor.destroy()
-      setEditor(null)
+      // if (editor == null) return
+      // editor.destroy()
+      // setEditor(null)
+      if (editorRef.current) {
+        editorRef.current.destroy();
+        editorRef.current = null;
+      }
     }
-  }, [editor])
+  }, [])
 
   return (
     <>
       <div style={{ border: 'none', zIndex: 100 }}>
         <Toolbar
-          editor={editor}
+          editor={editorRef.current}
           defaultConfig={toolbarConfig}
           mode="default"
           style={{ borderBottom: '1px solid #ccc' }}
@@ -60,7 +130,11 @@ function MyEditor({ content }: EditorProps) {
         <Editor
           defaultConfig={editorConfig}
           value={html}
-          onCreated={setEditor}
+          onCreated={(editor) => {
+            if (!editorRef.current) {
+              editorRef.current = editor; // 只保存一次实例
+            }            
+          }}
           onChange={(editor) => setHtml(editor.getHtml())}
           mode="default"
           style={{ height: '35vh', overflowY: 'hidden' }}
@@ -69,6 +143,8 @@ function MyEditor({ content }: EditorProps) {
       {/* <div style={{ marginTop: '15px' }}>{html}</div> */}
     </>
   )
-}
+})
+
+MyEditor.displayName = 'MyEditor';
 
 export default MyEditor

@@ -1,7 +1,6 @@
 "use client"
 
-import { type Mail } from "@/data/mock";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   File,
@@ -30,6 +29,7 @@ import { MailDisplay } from "@/components/mail-display";
 import { Nav, NavProps } from "@/components/nav";
 import { useMail } from "@/hooks/use-mail";
 import { useUser } from "@/hooks/use-user"
+import { addDataTest, singleMail  } from "@/lib/idb";
 
 interface MailProps {
   accounts: {
@@ -37,7 +37,6 @@ interface MailProps {
     email: string
     icon: React.ReactNode
   }[]
-  mails: Mail[],
   defaultCollapsed?: boolean,
   defaultLayout: number[] | undefined,
   navCollapsedSize: number
@@ -66,14 +65,27 @@ const navList: NavProps['links'] = [
 
 export function Mail({
   accounts,
-  mails,
   defaultCollapsed = false,
   defaultLayout = [20, 32, 48],
   navCollapsedSize,
 }: MailProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
-  const [mail] = useMail();
+  const [mail, setMail] = useMail();
   const [user] = useUser();
+  const [mails, setMails] = useState<singleMail[]>([]); // 用于存储异步数据
+  useEffect(() => {
+    const fetchMails = async () => {
+      const data = await addDataTest(); // 异步获取数据
+      setMails(data); // 将数据存储到状态中
+      setMail((prevMail) => ({
+        ...prevMail,
+        selected: data[0].id
+      }));
+    };
+
+    fetchMails(); // 调用异步函数
+  }, [setMail]); // 空依赖数组，确保只在组件挂载时调用一次
+  
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup

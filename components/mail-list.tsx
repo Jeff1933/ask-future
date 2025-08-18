@@ -6,11 +6,13 @@ interface MailListProps {
   items: {
     id: string,
     title: string,
+    plain: string,
     text: string,
     date: string,
     read: boolean,
     reply: string,
     arrived: boolean,
+    img: Blob[] | null,
   }[],
 }
 
@@ -24,7 +26,7 @@ export function MailList({ items }: MailListProps) {
             <button 
               key={item.id}
               className={cn(
-                "flex flex-col bg-muted hover:bg-accent gap-2 items-start p-3 rounded-lg border border-input text-left transtion-all",
+                "flex flex-col bg-transparent hover:bg-accent gap-2 items-start p-3 rounded-lg border border-input text-left transtion-all",
                 mail.selected === item.id && "bg-muted"
               )}
               onClick={() => setMail({
@@ -44,7 +46,7 @@ export function MailList({ items }: MailListProps) {
                 </div>
               </div>
               <div className="content text-muted-foreground line-clamp-2 text-xs">
-                <span className="">{item.text.substring(0, 200)}</span>
+                <span className="">{item.plain.substring(0, 200)}</span>
               </div>
             </button>
           )

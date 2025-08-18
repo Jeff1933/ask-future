@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   Trash2,
+  File,
 } from "lucide-react";
 
 import {
@@ -15,6 +16,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useRef } from "react"
 // 动态导入 wangEdit.tsx
 const MyEditor = dynamic(() => import("@/components/wangEdit"), { ssr: false });
 
@@ -22,11 +24,13 @@ interface MailDisplayProps {
   mail: {
     id: string,
     title: string,
+    plain: string,
     text: string,
     date: string,
     read: boolean,
     reply: string,
     arrived: boolean,
+    img: Blob[] | null,
   } | null
 }
 
@@ -36,11 +40,25 @@ const buttons = [
     title: "移到垃圾箱",
     variant: "ghost" as "ghost" | "default",
     icon: Trash2,
+  },
+  {
+    title: "保存",
+    variant: "ghost"  as "ghost" | "default",
+    icon: File,
   }
 ];
 
 export function MailDisplay({ mail }: MailDisplayProps) {
-
+  const editorRef = useRef<{ save: (mail: MailDisplayProps["mail"]) => void }>(null);
+  
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, link: typeof buttons[number]) => {
+    e.preventDefault();
+    if (link.title === "保存") {
+      if (editorRef.current) {
+        editorRef.current.save(mail);
+      }
+    }
+  }
   return (
     <>
       <div className="flex h-full flex-col">
@@ -51,6 +69,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                 <TooltipTrigger asChild>
                   <Link
                     href="#"
+                    onClick={(e) => handleClick(e, link)}
                     className={cn(
                       buttonVariants({ variant: link.variant, size: "icon" }),
                       "h-9 w-9",
@@ -85,7 +104,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
             </div>
             <Separator />
             <div className="p-4 flex-1">
-              <MyEditor content={mail.text} />
+              <MyEditor ref={editorRef} content={{ text: mail.text, img: mail.img }} />
             </div>            
             {/* <div className="flex-1 whitespace-pre-wrap p-4 text-sm">
               <div>{mail.text}</div>
