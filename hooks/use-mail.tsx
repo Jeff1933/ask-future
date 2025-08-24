@@ -13,3 +13,10 @@ const configAtom = atom<Config>({
 export function useMail() {
   return useAtom(configAtom)
 }
+
+// 创建邮件模式
+const createModeAtom = atom<boolean>(false);
+
+export function useMode() {
+  return useAtom(createModeAtom)
+}

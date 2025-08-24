@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useUser } from "@/hooks/use-user"
+import { useMail } from "@/hooks/use-mail"
 
 interface AccountSwitcherProps {
   isCollapsed: boolean
@@ -29,12 +30,17 @@ export function AccountSwitcher({
     accounts[1].email
   )
   const [user, setUser] = useUser();
+  const [mail, setMail] = useMail();
   const handleValueChange = (e: string) => {
     setSelectedAccount(e);
     setUser({
       ...user,
       alived: e,
     });
+    setMail({
+      ...mail,
+      selected: null,
+    })
   }
   return (
     <Select defaultValue={selectedAccount} onValueChange={handleValueChange}>

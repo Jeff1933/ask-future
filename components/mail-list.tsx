@@ -2,18 +2,9 @@
 import { ScrollArea } from "./ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useMail } from "@/hooks/use-mail"
+import { singleMail } from "@/lib/idb"
 interface MailListProps {
-  items: {
-    id: string,
-    title: string,
-    plain: string,
-    text: string,
-    date: string,
-    read: boolean,
-    reply: string,
-    arrived: boolean,
-    img: Blob[] | null,
-  }[],
+  items: singleMail[];
 }
 
 export function MailList({ items }: MailListProps) {

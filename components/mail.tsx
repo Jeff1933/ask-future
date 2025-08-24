@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   File,
@@ -50,9 +50,9 @@ const navList: NavProps['links'] = [
     variant: "default",
   },
   {
-    title: "垃圾箱",
+    title: "草稿箱",
     label: "9",
-    icon: Trash2,
+    icon: File,
     variant: "ghost",
   },
   {
@@ -73,18 +73,26 @@ export function Mail({
   const [mail, setMail] = useMail();
   const [user] = useUser();
   const [mails, setMails] = useState<singleMail[]>([]); // 用于存储异步数据
+  
+  const fetchMails = async () => {
+    const data = await addDataTest(); // 异步获取数据
+    setMails(data); // 将数据存储到状态中
+  };
   useEffect(() => {
-    const fetchMails = async () => {
-      const data = await addDataTest(); // 异步获取数据
-      setMails(data); // 将数据存储到状态中
-      setMail((prevMail) => ({
-        ...prevMail,
-        selected: data[0].id
-      }));
-    };
-
     fetchMails(); // 调用异步函数
-  }, [setMail]); // 空依赖数组，确保只在组件挂载时调用一次
+  }, []); // 空依赖数组，确保只在组件挂载时调用一次
+
+  // const didSetSelectedRef = useRef(false);
+
+  // useLayoutEffect(() => {
+  //   if (!didSetSelectedRef.current && mails.length > 0) {
+  //     setMail((prevMail) => ({
+  //       ...prevMail,
+  //       selected: mails[0].id,
+  //     }));
+  //     didSetSelectedRef.current = true;
+  //   }
+  // }, [mails, setMail]);
   
   return (
     <TooltipProvider delayDuration={0}>
@@ -151,18 +159,29 @@ export function Mail({
             <div className="flex items-center px-4 py-2">
               <h1 className="text-xl font-bold">邮箱</h1>
               <TabsList className="ml-auto">
-                <TabsTrigger
-                  value="可读"
-                  className="text-zinc-600 dark:text-zinc-200"
-                >
-                  可读
-                </TabsTrigger>
-                <TabsTrigger
-                  value="未抵达"
-                  className="text-zinc-600 dark:text-zinc-200"
-                >
-                  未抵达
-                </TabsTrigger>
+                {user.alived === "future@you.com" ? (
+                  <>
+                  <TabsTrigger
+                    value="可读"
+                    className="text-zinc-600 dark:text-zinc-200"
+                  >
+                    可读
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="未抵达"
+                    className="text-zinc-600 dark:text-zinc-200"
+                  >
+                    未抵达
+                  </TabsTrigger>
+                  </>
+                ) : (
+                  <TabsTrigger
+                    value="草稿"
+                    className="text-zinc-600 dark:text-zinc-200"
+                  >
+                    草稿
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
             <Separator />
@@ -179,6 +198,9 @@ export function Mail({
             </TabsContent>
             <TabsContent value="未抵达" className="m-0">
               <MailList items={mails.filter((item) => !item.read)} />
+            </TabsContent>            
+            <TabsContent value="草稿" className="m-0">
+              <MailList items={mails.filter((item) => !item.send)} />
             </TabsContent>
           </Tabs>
         </ResizablePanel>
@@ -187,6 +209,7 @@ export function Mail({
         <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
           <MailDisplay
             mail={mails.find((item) => item.id === mail.selected) || null}
+            onRefresh={fetchMails}
           />
         </ResizablePanel>
       </ResizablePanelGroup>

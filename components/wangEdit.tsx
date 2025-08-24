@@ -6,20 +6,24 @@ import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } f
 import { Editor, Toolbar } from '@wangeditor/editor-for-react'
 import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 import { saveMail, singleMail } from "@/lib/idb";
+import { useUser } from "@/hooks/use-user";
 interface EditorProps {
   content: {
     text: string,
     img: Blob[] | null,
-  }
+  },
+  eHeight?: string,
 }
 
 type InsertFnType = (url: string, alt: string, href: string) => void;
 
-const MyEditor = forwardRef(({ content }: EditorProps, ref) => {
+const MyEditor = forwardRef((props: EditorProps, ref) => {
+  const [user] = useUser();
   const editorRef = useRef<IDomEditor | null>(null);
   // editor 实例
   // const [editor, setEditor] = useState<IDomEditor | null>(null) // TS 语法
-
+  const { content, eHeight } = props;
+  console.log(eHeight);
   const renderHtml = (content: EditorProps["content"]) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(content.text, "text/html")
@@ -47,14 +51,26 @@ const MyEditor = forwardRef(({ content }: EditorProps, ref) => {
     }, 0);
   }, [content]);
 
+  useEffect(() => {
+    console.log("编辑转换")
+    if (editorRef.current) {
+      if (user.alived === "future@you.com") {
+        editorRef.current.disable();
+      } else {
+        editorRef.current.enable();
+      }
+    }    
+  }, [user])
+
   // 工具栏配置
-  const toolbarConfig: Partial<IToolbarConfig> = {} // TS 语法
+  const toolbarConfig: Partial<IToolbarConfig> = {}
 
   // 编辑器配置
   const editorConfig: Partial<IEditorConfig> = {
     // TS 语法
     scroll: true,
     placeholder: '请输入内容...',
+    readOnly: user.alived === "future@you.com",
     MENU_CONF: {
       uploadImage: {
         async customUpload(file: File, insertFn: InsertFnType) {
@@ -75,12 +91,12 @@ const MyEditor = forwardRef(({ content }: EditorProps, ref) => {
     
   }
 
-  const handleSave = async (mail: singleMail) => {
+  const handleSave = async (mail: singleMail, isSend = false) => {
     if (!editorRef.current) return;
 
     const editorHtml = editorRef.current.getHtml();
     const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = editorHtml;    
+    tempDiv.innerHTML = editorHtml;
 
     const plain = tempDiv.textContent || "";
 
@@ -97,7 +113,9 @@ const MyEditor = forwardRef(({ content }: EditorProps, ref) => {
     mail.plain = plain;
     mail.text = editorHtml;
     mail.img = blobArr;
-
+    if (isSend) {
+      mail.send = true;
+    }
     await saveMail(mail);
   }
 
@@ -137,7 +155,7 @@ const MyEditor = forwardRef(({ content }: EditorProps, ref) => {
           }}
           onChange={(editor) => setHtml(editor.getHtml())}
           mode="default"
-          style={{ height: '35vh', overflowY: 'hidden' }}
+          style={{ height: eHeight || '35vh', overflowY: 'hidden', maxHeight: '636px' }}
         />
       </div>
       {/* <div style={{ marginTop: '15px' }}>{html}</div> */}

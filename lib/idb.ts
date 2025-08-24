@@ -10,7 +10,8 @@ interface MyDB extends DBSchema {
       date: string,
       read: boolean,
       reply: string,
-      arrived: boolean,
+      arrived: boolean, // TODO: 改为到达日期
+      send: boolean,
       img: Blob[] | null,
     },
     key: string
@@ -47,8 +48,9 @@ function generateDemo() {
     const read = true;
     const reply = '';
     const arrived = true;
+    const send = true;
     const img = null;
-    return { id, title, plain, text, date, read, reply, arrived, img };
+    return { id, title, plain, text, date, read, reply, arrived, send, img };
   })
 }
 
@@ -66,6 +68,7 @@ export interface singleMail {
   read: boolean,
   reply: string,
   arrived: boolean,
+  send: boolean,
   img: Blob[] | null,
 }
 

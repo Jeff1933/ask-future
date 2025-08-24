@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useMail, useMode } from "@/hooks/use-mail"
 
 export interface NavProps {
   isCollapsed: boolean
@@ -22,6 +23,20 @@ export interface NavProps {
 }
 
 export function Nav({ links, isCollapsed }: NavProps) {
+  const [mail, setMail] = useMail();
+  const [createMode, setCreateMode] = useMode();
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, link: NavProps["links"][0]) => {
+    e.preventDefault();
+    console.log("点击事件")
+    if (link.title === "发送") {
+      console.log("发送中");
+      setMail({
+        ...mail,
+        selected: null,
+      })
+      setCreateMode(true);
+    }
+  }
   return (
     <div
       data-collapsed={isCollapsed}
@@ -40,6 +55,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                     link.variant === "default" &&
                       "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
                   )}
+                  onClick={(e) => handleClick(e, link)}
                 >
                   <link.icon className="h-4 w-4" />
                   <span className="sr-only">{link.title}</span>
@@ -64,6 +80,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                   "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white",
                 "justify-start"
               )}
+              onClick={(e) => handleClick(e, link)}
             >
               <link.icon className="mr-2 h-4 w-4" />
               {link.title}
