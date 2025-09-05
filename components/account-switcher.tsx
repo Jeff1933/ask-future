@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useUser } from "@/hooks/use-user"
-import { useMail } from "@/hooks/use-mail"
+import { useMail, useTab, useMode, useShowEditBt } from "@/hooks/use-mail"
 
 interface AccountSwitcherProps {
   isCollapsed: boolean
@@ -31,6 +31,9 @@ export function AccountSwitcher({
   )
   const [user, setUser] = useUser();
   const [mail, setMail] = useMail();
+  const [tabVal, setTabVal] = useTab();
+  const [createMode, setCreateMode] = useMode();
+  const [showEditBt, setShowEditBt] = useShowEditBt();
   const handleValueChange = (e: string) => {
     setSelectedAccount(e);
     setUser({
@@ -40,10 +43,15 @@ export function AccountSwitcher({
     setMail({
       ...mail,
       selected: null,
-    })
+    });
+    setTabVal(e === "future@you.com" ? "可读" : "草稿");
+    setShowEditBt(false);
+    if (createMode) {
+      setCreateMode(false);
+    }
   }
   return (
-    <Select defaultValue={selectedAccount} onValueChange={handleValueChange}>
+    <Select defaultValue={selectedAccount} onValueChange={handleValueChange} disabled={createMode}>
       <SelectTrigger
         className={cn(
           "flex items-center gap-2 [&>span]:line-clamp-1 [&>span]:flex [&>span]:w-full [&>span]:items-center [&>span]:gap-1 [&>span]:truncate [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",

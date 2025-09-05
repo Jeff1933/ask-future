@@ -114,6 +114,7 @@ const MyEditor = forwardRef((props: EditorProps, ref) => {
     mail.text = editorHtml;
     mail.img = blobArr;
     if (isSend) {
+      // plain空值检测，提示什么都没写。
       mail.send = true;
     }
     await saveMail(mail);

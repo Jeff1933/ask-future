@@ -1,7 +1,7 @@
 
 import { ScrollArea } from "./ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { useMail } from "@/hooks/use-mail"
+import { useMail, useReadMode } from "@/hooks/use-mail"
 import { singleMail } from "@/lib/idb"
 interface MailListProps {
   items: singleMail[];
@@ -9,6 +9,7 @@ interface MailListProps {
 
 export function MailList({ items }: MailListProps) {
   const [mail, setMail] = useMail();
+  const isEdit = useReadMode();
   return (
     <ScrollArea className="h-screen">
       <div className="p-4 pt-0 gap-2 flex flex-col">
@@ -18,12 +19,14 @@ export function MailList({ items }: MailListProps) {
               key={item.id}
               className={cn(
                 "flex flex-col bg-transparent hover:bg-accent gap-2 items-start p-3 rounded-lg border border-input text-left transtion-all",
-                mail.selected === item.id && "bg-muted"
+                mail.selected === item.id && "bg-muted",
+                isEdit && "opacity-50 pointer-events-none"
               )}
               onClick={() => setMail({
                 ...mail,
                 selected: item.id,
               })}
+              disabled={isEdit}
             >
               <div className="flex flex-col w-full">
                 <div className="flex items-center">

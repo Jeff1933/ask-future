@@ -10,7 +10,7 @@ interface MyDB extends DBSchema {
       date: string,
       read: boolean,
       reply: string,
-      arrived: boolean, // TODO: 改为到达日期
+      arrived: string,
       send: boolean,
       img: Blob[] | null,
     },
@@ -47,7 +47,7 @@ function generateDemo() {
     const date = '2025/8/17';
     const read = true;
     const reply = '';
-    const arrived = true;
+    const arrived = '2025/08/17';
     const send = true;
     const img = null;
     return { id, title, plain, text, date, read, reply, arrived, send, img };
@@ -67,7 +67,7 @@ export interface singleMail {
   date: string,
   read: boolean,
   reply: string,
-  arrived: boolean,
+  arrived: string,
   send: boolean,
   img: Blob[] | null,
 }
@@ -75,10 +75,18 @@ export interface singleMail {
 export async function saveMail(data: singleMail) {
   const db1 = await demo();
   
+  const fmDate = formatDate(new Date());
   db1.put('mails', {
     ...data,
-    date: new Date().toDateString(),
+    date: fmDate,
   }).then(() => {
     console.log("保存成功")
   }).catch(() => console.error("something went wrong"));
+}
+
+const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${year}/${month}/${day}`;
 }

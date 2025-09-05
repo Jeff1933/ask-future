@@ -7,6 +7,7 @@ import {
   Trash2,
   File,
   Send,
+  CalendarFold,
 } from "lucide-react";
 
 import {
@@ -14,12 +15,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { NewDialog } from "./new-dialog"
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { singleMail } from "@/lib/idb";
-import { useMode } from "@/hooks/use-mail";
+import { useWriteMail, useMode, useTitleModal, useInitEmail, useShowEditBt } from "@/hooks/use-mail";
+import { useForNow } from "@/hooks/use-user";
+import { format } from "date-fns"
 // 动态导入 wangEdit.tsx
 const MyEditor = dynamic(() => import("@/components/wangEdit"), { ssr: false });
 
@@ -44,13 +48,22 @@ const buttons = [
     title: "发送",
     variant: "ghost" as "ghost" | "default",
     icon: Send,
-  }
+  },
+  {
+    title: "标题&日程",
+    variant: "ghost" as "ghost" | "default",
+    icon: CalendarFold,
+  },
 ];
 
 export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
   const editorRef = useRef<{ save: (mail: MailDisplayProps["mail"], isSend?: boolean) => void }>(null);
   const [createMode, setCreateMode] = useMode();
-
+  const setMail = useWriteMail();
+  const [modalOpen, setModalOpen] = useTitleModal();
+  const [initEmail, setInitEmail] = useInitEmail();
+  const [showEditBt, setShowEditBt] = useShowEditBt();
+  const [isNow, setIsNow] = useForNow();
   const mailRef = useRef(mail);
   useEffect(() => {
     if (mail === null) {
@@ -63,36 +76,68 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
         date: "",
         read: false,
         reply: "",
-        arrived: false,
+        arrived: "",
         send: false,
         img: null,
       };
     } else {
       console.log("选中邮件")
+      setShowEditBt(true);
+      if (mailRef.current !== null) {
+        if (mailRef.current.date === "") {
+          setCreateMode(false);
+        }
+      }
       mailRef.current = mail;
     }
-  }, [mail]);
+  }, [mail, setCreateMode, setShowEditBt]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, link: typeof buttons[number]) => {
     e.preventDefault();
     if (link.title === "保存") {
       if (editorRef.current) {
+        if (mailRef.current?.title === "") {
+          mailRef.current.title = initEmail.title;
+          mailRef.current.arrived = initEmail.arrived;
+        }
         editorRef.current.save(mailRef.current);
         setCreateMode(false);
+        setShowEditBt(false);
+        // 取消选中
+        setMail({
+          selected: null,
+        });
+        setInitEmail({
+          ...initEmail,
+          title: "",
+          arrived: format(new Date(), "yyyy/MM/dd"),
+        })
       }
     } else if (link.title === "发送") {
       if (editorRef.current) {
         editorRef.current.save(mailRef.current, true);
         setCreateMode(false);
+        // 取消选中
+        setMail({
+          selected: null,
+        });
+        setInitEmail({
+          ...initEmail,
+          title: "",
+          arrived: format(new Date(), "yyyy/MM/dd"),
+        })
       }
+    } else if (link.title === "标题&日程") {
+      setModalOpen(true);
     }
     onRefresh();
   }
+  console.log(isNow);
   return (
     <>
       <div className="flex h-full flex-col">
-        <div className="flex items-center px-4 py-2">
-          {buttons.map((link, index) => {
+        <div className={`flex items-center px-4 py-2`}>
+          {showEditBt && isNow && buttons.map((link, index) => {
             return (
               <Tooltip key={index} delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -116,11 +161,14 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
               </Tooltip>
             )
           })}
+          <div className="flex ml-auto h-9 items-center cursor-pointer">
+            <span>{new Date().toLocaleDateString()}</span>
+          </div>
         </div>
         <Separator />
-        {createMode ? (
+        {createMode || (showEditBt && isNow) ? (
           <div className="p-4 flex-1">
-              <MyEditor ref={editorRef} eHeight={'82vh'} content={{ text: '', img: null }} />
+              <MyEditor ref={editorRef} eHeight={'82vh'} content={{ text: mail?.text || '', img: mail?.img || null }} />
           </div>
         ) : mail ? (
           <div className="flex flex-col flex-1">
@@ -169,6 +217,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
           </div>
         )}
       </div>
+      <NewDialog />
     </>
   )
 }

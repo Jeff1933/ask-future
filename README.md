@@ -47,6 +47,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ## Jotai
 - 使用jotai库替代useState和useContext使用，避免记忆化的需要
 
+## TODO: 完成邮件初始化字段补全
+
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

@@ -1,13 +1,12 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   File,
   Inbox,
   Send,
   Search,
-  Trash2,
 } from "lucide-react"
 import {
   ResizableHandle,
@@ -27,10 +26,10 @@ import { AccountSwitcher } from "@/components/account-switcher";
 import { MailList } from "@/components/mail-list";
 import { MailDisplay } from "@/components/mail-display";
 import { Nav, NavProps } from "@/components/nav";
-import { useMail } from "@/hooks/use-mail";
+import { useMail, useTab } from "@/hooks/use-mail";
 import { useUser } from "@/hooks/use-user"
 import { addDataTest, singleMail  } from "@/lib/idb";
-
+import { format } from "date-fns"
 interface MailProps {
   accounts: {
     label: string
@@ -70,8 +69,9 @@ export function Mail({
   navCollapsedSize,
 }: MailProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
-  const [mail, setMail] = useMail();
+  const [mail] = useMail();
   const [user] = useUser();
+  const [tabVal, setTabVal] = useTab();
   const [mails, setMails] = useState<singleMail[]>([]); // 用于存储异步数据
   
   const fetchMails = async () => {
@@ -82,17 +82,7 @@ export function Mail({
     fetchMails(); // 调用异步函数
   }, []); // 空依赖数组，确保只在组件挂载时调用一次
 
-  // const didSetSelectedRef = useRef(false);
-
-  // useLayoutEffect(() => {
-  //   if (!didSetSelectedRef.current && mails.length > 0) {
-  //     setMail((prevMail) => ({
-  //       ...prevMail,
-  //       selected: mails[0].id,
-  //     }));
-  //     didSetSelectedRef.current = true;
-  //   }
-  // }, [mails, setMail]);
+  const nowaday = format(new Date(), "yyyy/MM/dd");
   
   return (
     <TooltipProvider delayDuration={0}>
@@ -144,9 +134,9 @@ export function Mail({
             isCollapsed={isCollapsed}
             links={navList.filter(item => {
               if (user.alived === "future@you.com") {
-                return item.title !== "发送"
+                return item.title === "邮箱"
               } else {
-                return item.title !== "邮箱"
+                return item.title === "发送"
               }
             })}
           >
@@ -155,7 +145,10 @@ export function Mail({
         <ResizableHandle withHandle />
         {/* 消息查看 */}
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-          <Tabs defaultValue="可读">
+          <Tabs 
+            value={tabVal}
+            onValueChange={(val) => setTabVal(val)}
+          >
             <div className="flex items-center px-4 py-2">
               <h1 className="text-xl font-bold">邮箱</h1>
               <TabsList className="ml-auto">
@@ -194,10 +187,10 @@ export function Mail({
               </form>
             </div>
             <TabsContent value="可读" className="m-0">
-              <MailList items={mails} />
+              <MailList items={mails.filter((item) => item.arrived < nowaday && item.send)} />
             </TabsContent>
             <TabsContent value="未抵达" className="m-0">
-              <MailList items={mails.filter((item) => !item.read)} />
+              <MailList items={mails.filter((item) => item.arrived >= nowaday && item.send)} />
             </TabsContent>            
             <TabsContent value="草稿" className="m-0">
               <MailList items={mails.filter((item) => !item.send)} />
