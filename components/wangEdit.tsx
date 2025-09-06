@@ -63,7 +63,34 @@ const MyEditor = forwardRef((props: EditorProps, ref) => {
   }, [user])
 
   // 工具栏配置
-  const toolbarConfig: Partial<IToolbarConfig> = {}
+  const toolbarConfig: Partial<IToolbarConfig> = {
+    excludeKeys: [
+      'bgColor',
+      'code',
+      'codeBlock',
+      'codeSelectLang',
+      'divider',
+      'insertLink',
+      'showLinkImg',
+      'group-image',
+      'group-video',
+      'editLink',
+      'insertTable',
+      'insertTableCol',
+      'insertTableRow',
+      'tableFullWidth',
+      'tableHeader',
+      'todo',      
+      'unLink',
+      'viewLink',
+      'group-more-style', // 排除菜单组，写菜单组 key 的值即可
+      'viewImageLink',
+    ],
+    insertKeys: {
+      index: 20,
+      keys: ['uploadImage'],
+    }
+  }
 
   // 编辑器配置
   const editorConfig: Partial<IEditorConfig> = {
@@ -88,8 +115,10 @@ const MyEditor = forwardRef((props: EditorProps, ref) => {
         allowedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'], // 允许的文件类型
       },      
     },
-    
   }
+  const ToolbarConfig = editorRef.current?.getAllMenuKeys();
+
+  console.log(ToolbarConfig);
 
   const handleSave = async (mail: singleMail, isSend = false) => {
     if (!editorRef.current) return;

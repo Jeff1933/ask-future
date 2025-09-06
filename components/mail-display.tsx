@@ -1,6 +1,5 @@
 "use client"
 import dynamic from "next/dynamic"
-import Link from "next/link"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -8,6 +7,7 @@ import {
   File,
   Send,
   CalendarFold,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -19,11 +19,13 @@ import { NewDialog } from "./new-dialog"
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef } from "react";
-import { singleMail } from "@/lib/idb";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { singleMail, deleteMail, saveMail } from "@/lib/idb";
 import { useWriteMail, useMode, useTitleModal, useInitEmail, useShowEditBt } from "@/hooks/use-mail";
 import { useForNow } from "@/hooks/use-user";
 import { format } from "date-fns"
+import { SendDialog } from "./send-dialog"
+import { DeleteDialog } from "./delete-dialog"
 // 动态导入 wangEdit.tsx
 const MyEditor = dynamic(() => import("@/components/wangEdit"), { ssr: false });
 
@@ -35,7 +37,7 @@ interface MailDisplayProps {
 
 const buttons = [
   {
-    title: "移到垃圾箱",
+    title: "删除邮件",
     variant: "ghost" as "ghost" | "default",
     icon: Trash2,
   },
@@ -54,6 +56,11 @@ const buttons = [
     variant: "ghost" as "ghost" | "default",
     icon: CalendarFold,
   },
+  {
+    title: "退出编辑",
+    variant: "ghost" as "ghost" | "default",
+    icon: LogOut,
+  },
 ];
 
 export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
@@ -64,7 +71,10 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
   const [initEmail, setInitEmail] = useInitEmail();
   const [showEditBt, setShowEditBt] = useShowEditBt();
   const [isNow, setIsNow] = useForNow();
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const mailRef = useRef(mail);
+  const [replyTextValue, setReplyTextValue] = useState("");
   useEffect(() => {
     if (mail === null) {
       console.log("初始化")
@@ -92,7 +102,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
     }
   }, [mail, setCreateMode, setShowEditBt]);
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, link: typeof buttons[number]) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>, link: typeof buttons[number]) => {
     e.preventDefault();
     if (link.title === "保存") {
       if (editorRef.current) {
@@ -101,38 +111,84 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
           mailRef.current.arrived = initEmail.arrived;
         }
         editorRef.current.save(mailRef.current);
-        setCreateMode(false);
-        setShowEditBt(false);
-        // 取消选中
-        setMail({
-          selected: null,
-        });
-        setInitEmail({
-          ...initEmail,
-          title: "",
-          arrived: format(new Date(), "yyyy/MM/dd"),
-        })
+        outEditing();
+        onRefresh();
       }
     } else if (link.title === "发送") {
-      if (editorRef.current) {
-        editorRef.current.save(mailRef.current, true);
-        setCreateMode(false);
-        // 取消选中
-        setMail({
-          selected: null,
-        });
-        setInitEmail({
-          ...initEmail,
-          title: "",
-          arrived: format(new Date(), "yyyy/MM/dd"),
-        })
-      }
+      console.log("进入到发送")
+      setSendModalOpen(true);
     } else if (link.title === "标题&日程") {
       setModalOpen(true);
+    } else if (link.title === "退出编辑") {
+      outEditing();
+    } else if (link.title === "删除邮件") {
+      console.log("删除")
+      setDeleteModalOpen(true);
     }
-    onRefresh();
   }
-  console.log(isNow);
+  // 发送邮件
+  const sendFc = () => {
+    if (editorRef.current) {
+      editorRef.current.save(mailRef.current, true);
+      outEditing();
+      onRefresh();
+    }
+  }
+  // 删除邮件
+  const deleteFc = async () => {
+    if (mail !== null) {
+      try {
+        await deleteMail(mail);
+        outEditing();
+        onRefresh();
+      } catch(e) {
+        console.error(e);
+      }
+    }
+  }
+  // 退出编辑状态
+  const outEditing = () => {
+    setCreateMode(false);
+    setShowEditBt(false);
+    // 取消选中
+    setMail({
+      selected: null,
+    });
+    setInitEmail({
+      ...initEmail,
+      title: "",
+      arrived: format(new Date(), "yyyy/MM/dd"),
+    })
+  }
+  // 回复邮件
+  const replyMail = async(e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // 阻止表单提交
+    if (mail !== null) {
+      if (replyTextValue !== "") {
+        console.log(replyTextValue);
+        mail.reply = replyTextValue
+        try {
+          await saveMail(mail);
+          setReplyTextValue("");
+          // 取消选中
+          setMail({
+            selected: null,
+          });
+          onRefresh();
+        } catch(e) {
+          console.error(e);
+        }
+      }
+    }
+  }
+
+  const content = useMemo(() => {
+    return {
+      text: mail?.text || '',
+      img: mail?.img || null,
+    }
+  }, [mail])
+
   return (
     <>
       <div className="flex h-full flex-col">
@@ -141,8 +197,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
             return (
               <Tooltip key={index} delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <Link
-                    href="#"
+                  <Button                    
                     onClick={(e) => handleClick(e, link)}
                     className={cn(
                       buttonVariants({ variant: link.variant, size: "icon" }),
@@ -150,10 +205,11 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
                       link.variant === "default" &&
                         "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
                     )}
+                    disabled={link.title === "删除邮件" && mail === null}
                   >
                     <link.icon className="h-4 w-4" />
                     <span className="sr-only">{link.title}</span>
-                  </Link>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="flex items-center gap-4">
                   {link.title}                  
@@ -168,7 +224,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
         <Separator />
         {createMode || (showEditBt && isNow) ? (
           <div className="p-4 flex-1">
-              <MyEditor ref={editorRef} eHeight={'82vh'} content={{ text: mail?.text || '', img: mail?.img || null }} />
+              <MyEditor ref={editorRef} eHeight={'82vh'} content={content} />
           </div>
         ) : mail ? (
           <div className="flex flex-col flex-1">
@@ -193,21 +249,32 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
             <Separator className="mt-auto" />
             <div className="p-4">
               <form>
-                <div className="grid gap-4">
-                  <Textarea
-                    className="p-4 max-h-[30vh]"
-                    placeholder={`Reply to You...`}
-                  />
-                  <div className="flex items-center">
-                    <Button
-                      onClick={(e) => e.preventDefault()}
-                      size="sm"
-                      className="ml-auto"
-                    >
-                      Send
-                    </Button>
+                {mail.reply !== "" ?
+                  <div className="">
+                    <Textarea
+                      className="p-4"
+                      value={mail.reply}
+                      readOnly
+                    />
+                  </div> :
+                  <div className="grid gap-4">
+                    <Textarea
+                      className="p-4 max-h-[30vh]"
+                      placeholder={`Reply to You...`}
+                      value={replyTextValue}
+                      onChange={(e) => setReplyTextValue(e.target.value)}
+                    />
+                    <div className="flex items-center">
+                      <Button
+                        onClick={(e) => replyMail(e)}
+                        size="sm"
+                        className="ml-auto bg-primary text-primary-foreground"
+                      >
+                        Send
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                }
               </form>
             </div>
           </div>
@@ -218,6 +285,8 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
         )}
       </div>
       <NewDialog />
+      <SendDialog ifOpen={sendModalOpen} refObj={mailRef} sendFc={sendFc} setOpen={setSendModalOpen} />
+      <DeleteDialog isOpen={deleteModalOpen} setOpen={setDeleteModalOpen} deleteFc={deleteFc} />
     </>
   )
 }

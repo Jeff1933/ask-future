@@ -90,3 +90,13 @@ const formatDate = (date: Date) => {
   const day = date.getDate();
   return `${year}/${month}/${day}`;
 }
+
+export async function deleteMail(data: singleMail) {
+  const db1 = await demo();
+
+  db1.delete('mails', data.id).then(() => {
+    console.log("删除成功");
+  }).catch((e) => {
+    console.error(`删除失败：${e}`);
+  })
+}

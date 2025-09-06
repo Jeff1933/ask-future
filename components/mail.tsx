@@ -191,7 +191,7 @@ export function Mail({
             </TabsContent>
             <TabsContent value="未抵达" className="m-0">
               <MailList items={mails.filter((item) => item.arrived >= nowaday && item.send)} />
-            </TabsContent>            
+            </TabsContent>
             <TabsContent value="草稿" className="m-0">
               <MailList items={mails.filter((item) => !item.send)} />
             </TabsContent>

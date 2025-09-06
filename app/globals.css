@@ -136,5 +136,6 @@ body {
   --color-accent-foreground: var(--accent-foreground);
   --color-background: var(--background);
   --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground)
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
 }
