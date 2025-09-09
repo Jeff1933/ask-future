@@ -28,7 +28,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>, link: NavProps["links"][0]) => {
     e.preventDefault();
     console.log("点击事件")
-    if (link.title === "发送") {
+    if (link.title === "新建邮件") {
       console.log("发送中");
       // setModalOpen(true);
 

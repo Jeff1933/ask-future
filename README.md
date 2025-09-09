@@ -1,4 +1,11 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+**未来信箱**
+
+这是一个基于Next.js构建的邮箱类应用，但是用户只有你自己...
+
+可能的功能（根据设置送达时间从远到近）
+  - 了解过去的你的兴趣爱好、所做的事、生活经历
+  - 做一些短期规划，看看在规划内是否实现
+  - 备忘录
 
 ## Getting Started
 
@@ -34,7 +41,16 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   - 大段 Base64 文本会增加 HTML 解析负担
   - 流式支持：支持分片读取（如 blob.slice()），适合流式加载大文件,canvas.toBlob()
 
-## 注意事项
+localStorage: 
+  - 仅限 5MB~10MB
+  - 仅支持字符串键值，查询需遍历所有数据（性能极差）
+
+indexdbDB: 
+  - 一般最大可以达到磁盘空间的50% 邮箱需要存储大量邮件（含附件、富文本等）
+  - 对象存储、索引，可高效查询
+  - 异步API，避免阻塞UI线程
+
+## idb库注意事项
 
 本项目使用idb库简化indexdb使用，下面是相关的使用提醒：
 
@@ -42,13 +58,10 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## wangEditor使用问题
 
-初始化内容时，在useEffect里面
+初始化内容时，在useEffect里面setTimout等待背景板异步渲染后再渲染文字
 
 ## Jotai
 - 使用jotai库替代useState和useContext使用，避免记忆化的需要
-
-## TODO: 完成邮件初始化字段补全
-
 
 ## Deploy on Vercel
 

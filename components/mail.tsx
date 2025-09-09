@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   File,
   Inbox,
-  Send,
+  MailPlus,
   Search,
 } from "lucide-react"
 import {
@@ -44,7 +44,7 @@ interface MailProps {
 const navList: NavProps['links'] = [
   {
     title: "邮箱",
-    label: "128",
+    label: "",
     icon: Inbox,
     variant: "default",
   },
@@ -55,9 +55,9 @@ const navList: NavProps['links'] = [
     variant: "ghost",
   },
   {
-    title: "发送",
+    title: "新建邮件",
     label: "",
-    icon: Send,
+    icon: MailPlus,
     variant: "ghost",
   },
 ]
@@ -136,7 +136,7 @@ export function Mail({
               if (user.alived === "future@you.com") {
                 return item.title === "邮箱"
               } else {
-                return item.title === "发送"
+                return item.title === "新建邮件"
               }
             })}
           >

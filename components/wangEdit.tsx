@@ -2,11 +2,12 @@
 
 import '@wangeditor/editor/dist/css/style.css' // 引入 css
 
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle, memo } from 'react'
 import { Editor, Toolbar } from '@wangeditor/editor-for-react'
 import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 import { saveMail, singleMail } from "@/lib/idb";
-import { useUser } from "@/hooks/use-user";
+import { useUser, useForNow } from "@/hooks/use-user";
+import { useWriteChangeFlag } from "@/hooks/use-auto-save";
 interface EditorProps {
   content: {
     text: string,
@@ -17,13 +18,15 @@ interface EditorProps {
 
 type InsertFnType = (url: string, alt: string, href: string) => void;
 
-const MyEditor = forwardRef((props: EditorProps, ref) => {
+const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
   const [user] = useUser();
+  const [isNow] = useForNow();
+  const setFlag = useWriteChangeFlag();
   const editorRef = useRef<IDomEditor | null>(null);
   // editor 实例
   // const [editor, setEditor] = useState<IDomEditor | null>(null) // TS 语法
   const { content, eHeight } = props;
-  console.log(eHeight);
+  // console.log(eHeight);
   const renderHtml = (content: EditorProps["content"]) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(content.text, "text/html")
@@ -39,7 +42,7 @@ const MyEditor = forwardRef((props: EditorProps, ref) => {
       })
     }
 
-    return doc.body.innerHTML; // TODO: 在以后写入之后需要将编辑器状态改为禁止编辑
+    return doc.body.innerHTML;
   }
 
   // 编辑器内容
@@ -49,10 +52,11 @@ const MyEditor = forwardRef((props: EditorProps, ref) => {
     setTimeout(() => {
       setHtml(renderHtml(content))
     }, 0);
+    // setHtml(renderHtml(content))
   }, [content]);
 
   useEffect(() => {
-    console.log("编辑转换")
+    // console.log("编辑转换")
     if (editorRef.current) {
       if (user.alived === "future@you.com") {
         editorRef.current.disable();
@@ -115,10 +119,13 @@ const MyEditor = forwardRef((props: EditorProps, ref) => {
         allowedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'], // 允许的文件类型
       },      
     },
+    onChange: () => {
+      if (isNow) {
+        setFlag((prev) => prev + 1);
+      }
+    }
   }
-  const ToolbarConfig = editorRef.current?.getAllMenuKeys();
-
-  console.log(ToolbarConfig);
+  // const ToolbarConfig = editorRef.current?.getAllMenuKeys();
 
   const handleSave = async (mail: singleMail, isSend = false) => {
     if (!editorRef.current) return;
@@ -191,7 +198,7 @@ const MyEditor = forwardRef((props: EditorProps, ref) => {
       {/* <div style={{ marginTop: '15px' }}>{html}</div> */}
     </>
   )
-})
+}))
 
 MyEditor.displayName = 'MyEditor';
 

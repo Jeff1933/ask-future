@@ -20,6 +20,7 @@ export function NewDialog() {
   const [modalOpen, setModalOpen] = useTitleModal();
   const [initEamil, setInitEmail] = useInitEmail();
   const inputDate = (e: Date | undefined) => {
+    if (!e) return;
     setInitEmail({
       ...initEamil,
       arrived: format(e as Date, "yyyy/MM/dd"),

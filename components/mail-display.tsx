@@ -23,9 +23,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { singleMail, deleteMail, saveMail } from "@/lib/idb";
 import { useWriteMail, useMode, useTitleModal, useInitEmail, useShowEditBt } from "@/hooks/use-mail";
 import { useForNow } from "@/hooks/use-user";
-import { format } from "date-fns"
-import { SendDialog } from "./send-dialog"
-import { DeleteDialog } from "./delete-dialog"
+import { format } from "date-fns";
+import { useAutoSave } from "@/hooks/use-auto-save";
+import { SendDialog } from "./send-dialog";
+import { DeleteDialog } from "./delete-dialog";
 // 动态导入 wangEdit.tsx
 const MyEditor = dynamic(() => import("@/components/wangEdit"), { ssr: false });
 
@@ -115,12 +116,19 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
         onRefresh();
       }
     } else if (link.title === "发送") {
-      console.log("进入到发送")
+      if (mailRef.current?.title === "" && initEmail.title !== "") {
+        mailRef.current.title = initEmail.title;
+        mailRef.current.arrived = initEmail.arrived;
+      }
       setSendModalOpen(true);
     } else if (link.title === "标题&日程") {
       setModalOpen(true);
     } else if (link.title === "退出编辑") {
-      outEditing();
+      if (createMode) {
+        deleteFc(mailRef.current);
+      } else {
+        outEditing();
+      }
     } else if (link.title === "删除邮件") {
       console.log("删除")
       setDeleteModalOpen(true);
@@ -135,10 +143,10 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
     }
   }
   // 删除邮件
-  const deleteFc = async () => {
-    if (mail !== null) {
+  const deleteFc = async (target = mail ? mail : mailRef.current) => {
+    if (target !== null) {
       try {
-        await deleteMail(mail);
+        await deleteMail(target);
         outEditing();
         onRefresh();
       } catch(e) {
@@ -181,6 +189,16 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
       }
     }
   }
+  // 保存邮件
+  const saveE = () => {
+    if (createMode) {
+      if (editorRef.current) {
+        editorRef.current.save(mailRef.current);
+      }
+    }
+  }
+
+  useAutoSave(saveE);
 
   const content = useMemo(() => {
     return {
@@ -241,7 +259,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
             </div>
             <Separator />
             <div className="p-4 flex-1">
-              <MyEditor ref={editorRef} content={{ text: mail.text, img: mail.img }} />
+              <MyEditor ref={editorRef} content={content} />
             </div>
             {/* <div className="flex-1 whitespace-pre-wrap p-4 text-sm">
               <div>{mail.text}</div>
