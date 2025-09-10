@@ -28,8 +28,10 @@ export function SendDialog({ ifOpen, refObj, sendFc, setOpen }: SendDialogProps)
     if (ifOpen) {
       if (refObj.current) {
         if (refObj.current.title === "") {
+          setAllowSend(false);
           setAlertText("您的邮件标题未填写, 请点击标题&日程按钮填写并保存");
         } else if (refObj.current.plain === "") {
+          setAllowSend(false);
           setAlertText("如果没猜错, 你的邮件空空如也, 先填写邮件内容吧");
         } else {
           setAlertText("是否确认发送邮件?");

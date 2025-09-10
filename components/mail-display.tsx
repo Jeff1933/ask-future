@@ -8,6 +8,7 @@ import {
   Send,
   CalendarFold,
   LogOut,
+  CircleQuestionMark
 } from "lucide-react";
 
 import {
@@ -16,17 +17,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { NewDialog } from "./new-dialog"
+import { SendDialog } from "./send-dialog";
+import { DeleteDialog } from "./delete-dialog";
+import { QADialog } from "./qa-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { singleMail, deleteMail, saveMail } from "@/lib/idb";
 import { useWriteMail, useMode, useTitleModal, useInitEmail, useShowEditBt } from "@/hooks/use-mail";
 import { useForNow } from "@/hooks/use-user";
 import { format } from "date-fns";
 import { useAutoSave } from "@/hooks/use-auto-save";
-import { SendDialog } from "./send-dialog";
-import { DeleteDialog } from "./delete-dialog";
+
 // 动态导入 wangEdit.tsx
 const MyEditor = dynamic(() => import("@/components/wangEdit"), { ssr: false });
 
@@ -62,18 +66,24 @@ const buttons = [
     variant: "ghost" as "ghost" | "default",
     icon: LogOut,
   },
+  {
+    title: "疑问",
+    variant: "ghost" as "ghost" | "default",
+    icon: CircleQuestionMark,
+  },
 ];
 
 export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
   const editorRef = useRef<{ save: (mail: MailDisplayProps["mail"], isSend?: boolean) => void }>(null);
   const [createMode, setCreateMode] = useMode();
   const setMail = useWriteMail();
-  const [modalOpen, setModalOpen] = useTitleModal();
+  const [titleModalOpen, setTitleModalOpen] = useTitleModal();
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [qaModalOpen, setQaModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [initEmail, setInitEmail] = useInitEmail();
   const [showEditBt, setShowEditBt] = useShowEditBt();
   const [isNow, setIsNow] = useForNow();
-  const [sendModalOpen, setSendModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const mailRef = useRef(mail);
   const [replyTextValue, setReplyTextValue] = useState("");
   useEffect(() => {
@@ -107,7 +117,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
     e.preventDefault();
     if (link.title === "保存") {
       if (editorRef.current) {
-        if (mailRef.current?.title === "") {
+        if (mailRef.current && initEmail.title !== "") {
           mailRef.current.title = initEmail.title;
           mailRef.current.arrived = initEmail.arrived;
         }
@@ -122,16 +132,18 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
       }
       setSendModalOpen(true);
     } else if (link.title === "标题&日程") {
-      setModalOpen(true);
+      setTitleModalOpen(true);
     } else if (link.title === "退出编辑") {
       if (createMode) {
-        deleteFc(mailRef.current);
+        deleteFc();
       } else {
         outEditing();
       }
     } else if (link.title === "删除邮件") {
       console.log("删除")
       setDeleteModalOpen(true);
+    } else if (link.title === "疑问") {
+      setQaModalOpen(true);
     }
   }
   // 发送邮件
@@ -143,10 +155,11 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
     }
   }
   // 删除邮件
-  const deleteFc = async (target = mail ? mail : mailRef.current) => {
-    if (target !== null) {
+  const deleteFc = async () => {
+    const dMail = mail ? mail : mailRef.current
+    if (dMail !== null) {
       try {
-        await deleteMail(target);
+        await deleteMail(dMail);
         outEditing();
         onRefresh();
       } catch(e) {
@@ -305,6 +318,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
       <NewDialog />
       <SendDialog ifOpen={sendModalOpen} refObj={mailRef} sendFc={sendFc} setOpen={setSendModalOpen} />
       <DeleteDialog isOpen={deleteModalOpen} setOpen={setDeleteModalOpen} deleteFc={deleteFc} />
+      <QADialog isOpen={qaModalOpen} setOpen={setQaModalOpen} />
     </>
   )
 }

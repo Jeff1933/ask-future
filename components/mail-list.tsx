@@ -5,6 +5,7 @@ import { useMail, useReadMode } from "@/hooks/use-mail"
 import { useForNow } from "@/hooks/use-user"
 import { singleMail } from "@/lib/idb"
 import { format } from "date-fns";
+import { saveMail } from "@/lib/idb";
 interface MailListProps {
   items: singleMail[];
 }
@@ -14,11 +15,21 @@ export function MailList({ items }: MailListProps) {
   const isEdit = useReadMode();
   const [isNow, setIsNow] = useForNow();
   const nowaday = format(new Date(), "yyyy/MM/dd");
+  const handleMailClick = async(item: singleMail) => {
+    setMail({
+      ...mail,
+      selected: item.id,
+    })
+    if (item.send && !item.read) {
+      item.read = true;
+      await saveMail(item);
+    }
+  }
   return (
     <ScrollArea className="h-screen">
       <div className="p-4 pt-0 gap-2 flex flex-col">
         {items.map((item) => {
-          const ifShow = item.arrived < nowaday || isNow;
+          const ifShow = item.arrived <= nowaday || isNow;
           return (
             <button 
               key={item.id}
@@ -27,10 +38,7 @@ export function MailList({ items }: MailListProps) {
                 mail.selected === item.id && "bg-muted",
                 ((item.send && !ifShow) || isEdit) && "opacity-50 pointer-events-none"
               )}
-              onClick={() => setMail({
-                ...mail,
-                selected: item.id,
-              })}
+              onClick={() => handleMailClick(item)}
               disabled={(item.send && !ifShow) || isEdit}
             >
               <div className="flex flex-col w-full">

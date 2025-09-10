@@ -178,21 +178,21 @@ export function Mail({
               </TabsList>
             </div>
             <Separator />
-            <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            {/* <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <form>
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search" className="pl-8" />
                 </div>
               </form>
-            </div>
-            <TabsContent value="可读" className="m-0">
-              <MailList items={mails.filter((item) => item.arrived < nowaday && item.send)} />
+            </div> */}
+            <TabsContent value="可读" className="m-0 mt-4">
+              <MailList items={mails.filter((item) => item.arrived <= nowaday && item.send)} />
             </TabsContent>
-            <TabsContent value="未抵达" className="m-0">
-              <MailList items={mails.filter((item) => item.arrived >= nowaday && item.send)} />
+            <TabsContent value="未抵达" className="m-0 mt-4">
+              <MailList items={mails.filter((item) => item.arrived > nowaday && item.send)} />
             </TabsContent>
-            <TabsContent value="草稿" className="m-0">
+            <TabsContent value="草稿" className="m-0 mt-4">
               <MailList items={mails.filter((item) => !item.send)} />
             </TabsContent>
           </Tabs>
