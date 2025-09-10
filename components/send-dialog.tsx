@@ -59,7 +59,7 @@ export function SendDialog({ ifOpen, refObj, sendFc, setOpen }: SendDialogProps)
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setOpen(false)}>取消</AlertDialogCancel>
-          <AlertDialogAction disabled={!allowSend} onClick={handleSend}>继续发送</AlertDialogAction>
+          <AlertDialogAction className="hover:bg-accent border border-input" disabled={!allowSend} onClick={handleSend}>继续发送</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

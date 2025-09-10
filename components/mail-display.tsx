@@ -74,7 +74,7 @@ const buttons = [
 ];
 
 export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
-  const editorRef = useRef<{ save: (mail: MailDisplayProps["mail"], isSend?: boolean) => void }>(null);
+  const editorRef = useRef<{ save: (mail: MailDisplayProps["mail"], isSend?: boolean) => void, autoFocus: () => void }>(null);
   const [createMode, setCreateMode] = useMode();
   const setMail = useWriteMail();
   const [titleModalOpen, setTitleModalOpen] = useTitleModal();
@@ -83,7 +83,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [initEmail, setInitEmail] = useInitEmail();
   const [showEditBt, setShowEditBt] = useShowEditBt();
-  const [isNow, setIsNow] = useForNow();
+  const [isNow] = useForNow();
   const mailRef = useRef(mail);
   const [replyTextValue, setReplyTextValue] = useState("");
   useEffect(() => {
@@ -104,16 +104,22 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
     } else {
       console.log("选中邮件")
       setShowEditBt(true);
-      if (mailRef.current !== null) {
-        if (mailRef.current.date === "") {
-          setCreateMode(false);
-        }
-      }
+      // if (mailRef.current !== null) {
+      //   if (mailRef.current.date === "") {
+      //     setCreateMode(false);
+      //   }
+      // }
       mailRef.current = mail;
+      if (isNow) {
+        setTimeout(() => {
+          if (editorRef.current) editorRef.current.autoFocus();
+        }, 500);
+        
+      }
     }
-  }, [mail, setCreateMode, setShowEditBt]);
+  }, [mail, createMode, setCreateMode, setShowEditBt, isNow]);
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>, link: typeof buttons[number]) => {
+  const handleClick = async(e: React.MouseEvent<HTMLButtonElement>, link: typeof buttons[number]) => {
     e.preventDefault();
     if (link.title === "保存") {
       if (editorRef.current) {
@@ -121,12 +127,12 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
           mailRef.current.title = initEmail.title;
           mailRef.current.arrived = initEmail.arrived;
         }
-        editorRef.current.save(mailRef.current);
+        await editorRef.current.save(mailRef.current);
         outEditing();
         onRefresh();
       }
     } else if (link.title === "发送") {
-      if (mailRef.current?.title === "" && initEmail.title !== "") {
+      if (createMode && mailRef.current?.title === "" && initEmail.title !== "") {
         mailRef.current.title = initEmail.title;
         mailRef.current.arrived = initEmail.arrived;
       }
@@ -214,6 +220,7 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
   useAutoSave(saveE);
 
   const content = useMemo(() => {
+    console.log("hello")
     return {
       text: mail?.text || '',
       img: mail?.img || null,

@@ -13,7 +13,7 @@ interface MailListProps {
 export function MailList({ items }: MailListProps) {
   const [mail, setMail] = useMail();
   const isEdit = useReadMode();
-  const [isNow, setIsNow] = useForNow();
+  const [isNow] = useForNow();
   const nowaday = format(new Date(), "yyyy/MM/dd");
   const handleMailClick = async(item: singleMail) => {
     setMail({

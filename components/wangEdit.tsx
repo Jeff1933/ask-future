@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle, me
 import { Editor, Toolbar } from '@wangeditor/editor-for-react'
 import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 import { saveMail, singleMail } from "@/lib/idb";
-import { useUser, useForNow } from "@/hooks/use-user";
+import { useForNow } from "@/hooks/use-user";
 import { useWriteChangeFlag } from "@/hooks/use-auto-save";
 interface EditorProps {
   content: {
@@ -18,15 +18,14 @@ interface EditorProps {
 
 type InsertFnType = (url: string, alt: string, href: string) => void;
 
-const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
-  const [user] = useUser();
+const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
   const [isNow] = useForNow();
   const setFlag = useWriteChangeFlag();
   const editorRef = useRef<IDomEditor | null>(null);
+  const focusFlag = useRef(0);
   // editor 实例
   // const [editor, setEditor] = useState<IDomEditor | null>(null) // TS 语法
-  const { content, eHeight } = props;
-  // console.log(eHeight);
+
   const renderHtml = (content: EditorProps["content"]) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(content.text, "text/html")
@@ -55,16 +54,31 @@ const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
     // setHtml(renderHtml(content))
   }, [content]);
 
+  // useEffect(() => {
+  //   if (isNow) {
+  //     // const isFocus = editorRef.current?.isFocused();
+  //     if (focusFlag.current === 0) {
+  //       console.log("focus");
+  //       editorRef.current?.focus();
+  //       focusFlag.current = 1;
+  //     } else {
+  //       console.log("blur")
+  //       editorRef.current?.blur();
+  //       focusFlag.current = 0;
+  //     }
+  //   }
+  // }, [isNow, content])
+
   useEffect(() => {
     // console.log("编辑转换")
     if (editorRef.current) {
-      if (user.alived === "future@you.com") {
+      if (!isNow) {
         editorRef.current.disable();
       } else {
         editorRef.current.enable();
       }
     }    
-  }, [user])
+  }, [isNow])
 
   // 工具栏配置
   const toolbarConfig: Partial<IToolbarConfig> = {
@@ -101,7 +115,7 @@ const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
     // TS 语法
     scroll: true,
     placeholder: '请输入内容...',
-    readOnly: user.alived === "future@you.com",
+    readOnly: !isNow,
     MENU_CONF: {
       uploadImage: {
         async customUpload(file: File, insertFn: InsertFnType) {
@@ -156,8 +170,21 @@ const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
     await saveMail(mail);
   }
 
+  const autoFocusFn = () => {
+    console.log("focusing")
+    editorRef.current?.focus(true);
+    // if (focusFlag.current === 1) {
+    //   console.log("focus !!!!")
+    //   editorRef.current?.focus();
+    //   focusFlag.current = 0;
+    // } else {
+    //   focusFlag.current = 1;
+    // }
+  }
+
   useImperativeHandle(ref, () => ({
     save: handleSave,
+    autoFocus: autoFocusFn,
   }))
 
   // 及时销毁 editor ，重要！
@@ -173,6 +200,10 @@ const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
     }
   }, [])
 
+  // console.log("I want to know what html is:", html)
+  // if (isNow) {
+  //   editorRef.current?.focus();
+  // }
   return (
     <>
       <div style={{ border: 'none', zIndex: 100 }}>
@@ -190,7 +221,12 @@ const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
               editorRef.current = editor; // 只保存一次实例
             }            
           }}
-          onChange={(editor) => setHtml(editor.getHtml())}
+          onChange={(editor) => {    
+            const newHtml = editor.getHtml();
+            setHtml((prevHtml) => {
+              return newHtml
+            });
+          }}
           mode="default"
           style={{ height: eHeight || '35vh', overflowY: 'hidden', maxHeight: '636px' }}
         />
@@ -198,7 +234,7 @@ const MyEditor = memo(forwardRef((props: EditorProps, ref) => {
       {/* <div style={{ marginTop: '15px' }}>{html}</div> */}
     </>
   )
-}))
+})
 
 MyEditor.displayName = 'MyEditor';
 

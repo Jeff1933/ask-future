@@ -60,6 +60,9 @@ indexdbDB:
 
 初始化内容时，在useEffect里面setTimout等待背景板异步渲染后再渲染文字
 
+因为纯文本和有图片的数据结构不一样，在编辑模式下有图片和无图片的邮件之间切换时会出现无法寻找节点的错误
+通过自动聚焦减缓这个bug。
+
 ## Jotai
 - 使用jotai库替代useState和useContext使用，避免记忆化的需要
 

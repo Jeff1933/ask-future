@@ -55,7 +55,7 @@ export function NewDialog() {
             <Input id="title" defaultValue={initEamil.title} ref={inputTitleRef} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
+            <Label className="text-right">
               送达时间
             </Label>
             <DatePicker date={new Date(initEamil.arrived)} setDate={inputDate} />
