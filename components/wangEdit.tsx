@@ -8,6 +8,7 @@ import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 import { saveMail, singleMail } from "@/lib/idb";
 import { useForNow } from "@/hooks/use-user";
 import { useWriteChangeFlag } from "@/hooks/use-auto-save";
+import { useMode } from '@/hooks/use-mail'
 interface EditorProps {
   content: {
     text: string,
@@ -21,8 +22,8 @@ type InsertFnType = (url: string, alt: string, href: string) => void;
 const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
   const [isNow] = useForNow();
   const setFlag = useWriteChangeFlag();
+  const [createMode] = useMode();
   const editorRef = useRef<IDomEditor | null>(null);
-  const focusFlag = useRef(0);
   // editor 实例
   // const [editor, setEditor] = useState<IDomEditor | null>(null) // TS 语法
 
@@ -134,7 +135,7 @@ const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
       },      
     },
     onChange: () => {
-      if (isNow) {
+      if (isNow && createMode) {
         setFlag((prev) => prev + 1);
       }
     }
@@ -173,13 +174,6 @@ const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
   const autoFocusFn = () => {
     console.log("focusing")
     editorRef.current?.focus(true);
-    // if (focusFlag.current === 1) {
-    //   console.log("focus !!!!")
-    //   editorRef.current?.focus();
-    //   focusFlag.current = 0;
-    // } else {
-    //   focusFlag.current = 1;
-    // }
   }
 
   useImperativeHandle(ref, () => ({
@@ -221,12 +215,12 @@ const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
               editorRef.current = editor; // 只保存一次实例
             }            
           }}
-          onChange={(editor) => {    
-            const newHtml = editor.getHtml();
-            setHtml((prevHtml) => {
-              return newHtml
-            });
-          }}
+          // onChange={(editor) => {    
+          //   const newHtml = editor.getHtml();
+          //   setHtml((prevHtml) => {
+          //     return newHtml
+          //   });
+          // }}
           mode="default"
           style={{ height: eHeight || '35vh', overflowY: 'hidden', maxHeight: '636px' }}
         />
