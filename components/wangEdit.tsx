@@ -172,7 +172,7 @@ const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
   }
 
   const autoFocusFn = () => {
-    console.log("focusing")
+    // console.log("focusing")
     editorRef.current?.focus(true);
   }
 

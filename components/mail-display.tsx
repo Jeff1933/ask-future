@@ -153,9 +153,9 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
     }
   }
   // 发送邮件
-  const sendFc = () => {
+  const sendFc = async() => {
     if (editorRef.current) {
-      editorRef.current.save(mailRef.current, true);
+      await editorRef.current.save(mailRef.current, true);
       outEditing();
       onRefresh();
     }
@@ -220,7 +220,6 @@ export function MailDisplay({ mail, onRefresh }: MailDisplayProps) {
   useAutoSave(saveE);
 
   const content = useMemo(() => {
-    console.log("hello")
     return {
       text: mail?.text || '',
       img: mail?.img || null,
