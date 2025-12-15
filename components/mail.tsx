@@ -89,9 +89,12 @@ export function Mail({
       <ResizablePanelGroup
         direction="horizontal"
         onLayout={(sizes: number[]) => {
-          document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(
-            sizes
-          )}`
+          // localStorage.setItem('react-resizable-panels:layout:mail', JSON.stringify(
+          //   sizes
+          // ))
+          // document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(
+          //   sizes
+          // )}`
         }}
         className="h-full max-h-[50rem] items-stretch "
       >
@@ -103,15 +106,21 @@ export function Mail({
           maxSize={20}
           onCollapse={() => {
             setIsCollapsed(true)
-            document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-              true
-            )}`
+            // localStorage.setItem('react-resizable-panels:collapsed', JSON.stringify(
+            //   true
+            // ))
+            // document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
+            //   true
+            // )}`
           }}
           onResize={() => {
             setIsCollapsed(false)
-            document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-              false
-            )}`
+            // localStorage.setItem('react-resizable-panels:collapsed', JSON.stringify(
+            //   false
+            // ))
+            // document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
+            //   false
+            // )}`
           }}
           className={cn(
             isCollapsed &&
