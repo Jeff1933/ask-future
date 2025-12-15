@@ -2,7 +2,7 @@
 
 import '@wangeditor/editor/dist/css/style.css' // 引入 css
 
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle, memo } from 'react'
+import React, { useState, useEffect, useRef, useImperativeHandle } from 'react'
 import { Editor, Toolbar } from '@wangeditor/editor-for-react'
 import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 import { saveMail, singleMail } from "@/lib/idb";
@@ -15,11 +15,12 @@ interface EditorProps {
     img: Blob[] | null,
   },
   eHeight?: string,
+  ref?: React.Ref<any>,
 }
 
 type InsertFnType = (url: string, alt: string, href: string) => void;
 
-const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
+const MyEditor = ({ content, eHeight, ref }: EditorProps) => {
   const [isNow] = useForNow();
   const setFlag = useWriteChangeFlag();
   const [createMode] = useMode();
@@ -228,7 +229,7 @@ const MyEditor = forwardRef(({ content, eHeight }: EditorProps, ref) => {
       {/* <div style={{ marginTop: '15px' }}>{html}</div> */}
     </>
   )
-})
+}
 
 MyEditor.displayName = 'MyEditor';
 
