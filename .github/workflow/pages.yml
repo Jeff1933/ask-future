@@ -1,0 +1,37 @@
+name: Ask Future
+
+on:
+  push:
+    tags:
+      - 'v*'  # 仅当推送 v 开头的 tag 时触发，例如 v1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.15.0
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm install
+
+      - name: 🧱 Build project
+        run: npm run build && npm run export  # 使用 next export 生成静态文件
+
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./out  # Next.js 静态导出目录
+          commit_message: "Deploy from tag ${{ github.ref_name }}"
